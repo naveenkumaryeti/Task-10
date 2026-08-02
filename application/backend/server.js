@@ -20,7 +20,7 @@ app.get("/readyz", (req, res) => res.status(200).send("READY"));
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/payments", paymentRoutes);
+app.use("/api/payments", paymentRoutes);//
 app.use("/api", catalogRoutes); // /api/categories, /api/products
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
