@@ -6,5 +6,5 @@ version: 1.0.0
 appVersion: "8.0"
 dependencies:
   - name: mysql
-    version: "11.1.x"
+    version: "11.1.0"
     repository: "https://charts.bitnami.com/bitnami"
