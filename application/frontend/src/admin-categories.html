@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Manage Categories — QuikKart Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+(async function () {
+  if (!requireAdmin()) return;
+  renderAdminSidebar("categories");
+
+  let categories = [];
+  try { categories = await Api.adminGetCategories(); } catch { categories = DEMO_CATEGORIES; }
+
+  function render() {
+    document.getElementById("adminContent").innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="icon-btn" id="addCatBtn">+ Add Category</button>
+      </div>
+      <table class="admin-table">
+        <thead><tr><th>Icon</th><th>Name</th><th>Category ID</th></tr></thead>
+        <tbody>${categories.map(c => `<tr><td style="font-size:22px;">${c.emoji || "🛒"}</td><td>${c.name}</td><td>${c.id}</td></tr>`).join("")}</tbody>
+      </table>`;
+    document.getElementById("addCatBtn").addEventListener("click", addCategory);
+  }
+
+  function addCategory() {
+    const name = prompt("Category name:");
+    if (!name) return;
+    const emoji = prompt("Emoji icon (e.g. 🥦):", "🛒") || "🛒";
+    const newCat = { id: Date.now(), name, emoji };
+    Api.adminCreateCategory(newCat).catch(() => {});
+    categories.push(newCat);
+    render();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

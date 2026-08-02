@@ -1,0 +1,19 @@
+name: Notify Slack on Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "helm/**"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack notification
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {"text": "🚀 New Helm values pushed — ArgoCD will auto-sync within ~3 minutes."}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

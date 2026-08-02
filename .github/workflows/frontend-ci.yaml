@@ -1,0 +1,57 @@
+name: Frontend CI - Build, Scan, Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "application/frontend/**"
+
+env:
+  REGION: asia-south1
+  PROJECT_ID: zepto-with-gitops
+  REPO: prod-repo
+  IMAGE: zepto-frontend
+
+jobs:
+  build-scan-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build image
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ github.sha }} \
+            ./application/frontend
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Push image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Update Helm values (GitOps trigger)
+        run: |
+          sed -i "s#tag:.*#tag: ${{ github.sha }}#" helm/frontend/values-prod.yaml
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git commit -am "ci: deploy frontend ${{ github.sha }}"
+          git push

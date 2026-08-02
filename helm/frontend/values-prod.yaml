@@ -1,0 +1,60 @@
+image:
+  repository: asia-south1-docker.pkg.dev/zepto-with-gitops/prod-repo/zepto-frontend
+  tag: prod
+  pullPolicy: IfNotPresent
+
+replicaCount: 3
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 75
+
+rollingUpdate:
+  maxUnavailable: 1
+  maxSurge: 1
+
+probes:
+  readiness:
+    path: /healthz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 15
+  startup:
+    path: /healthz
+    failureThreshold: 30
+    periodSeconds: 5
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 101
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+serviceAccount:
+  create: true
+  name: frontend-sa
+
+env: []
+
+backendHost: backend-service
+backendPort: 3000

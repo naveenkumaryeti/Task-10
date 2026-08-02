@@ -1,0 +1,21 @@
+# Right-sized for a demo/small-production cluster (3x e2-standard-4 nodes).
+# The Elastic chart defaults to a 3-node cluster requesting 2Gi+ RAM each,
+# which alone can starve a small cluster — this trims it to 1 node.
+replicas: 1
+minimumMasterNodes: 1
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "1Gi"
+  limits:
+    cpu: "1000m"
+    memory: "2Gi"
+
+volumeClaimTemplate:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 15Gi
+
+esJavaOpts: "-Xmx1g -Xms1g"

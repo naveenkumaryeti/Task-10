@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Orders — QuikKart Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+(async function () {
+  if (!requireAdmin()) return;
+  renderAdminSidebar("orders");
+
+  let orders = [];
+  try { orders = await Api.adminGetOrders(); } catch { orders = []; }
+
+  document.getElementById("adminContent").innerHTML = orders.length ? `
+    <table class="admin-table">
+      <thead><tr><th>Order ID</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Payment</th><th>Txn ID</th><th>Placed On</th></tr></thead>
+      <tbody>${orders.map(o => `
+        <tr>
+          <td>#${o.id}</td>
+          <td>${o.customer_name}</td>
+          <td>${o.phone}</td>
+          <td>₹${o.total_amount}</td>
+          <td>${o.payment_method} · <span class="badge-stock-ok">${o.payment_status || "PAID"}</span></td>
+          <td>${o.transaction_id || "-"}</td>
+          <td>${new Date(o.created_at).toLocaleString()}</td>
+        </tr>`).join("")}</tbody>
+    </table>` : `<div class="empty-state">No orders yet — connect the backend to see live orders here.</div>`;
+})();
+</script>
+</body>
+</html>

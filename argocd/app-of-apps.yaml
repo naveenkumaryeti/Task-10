@@ -1,0 +1,22 @@
+# Single "root" Application that manages the 3 tier Applications above.
+# Apply this once; ArgoCD then auto-creates/syncs frontend, backend, database.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zepto-app-of-apps
+  namespace: argocd
+spec:
+  project: zepto-platform
+  source:
+    repoURL: https://github.com/naveenkumaryeti/zepto-3tier-platform.git
+    targetRevision: main
+    path: argocd
+    directory:
+      include: "application-*.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

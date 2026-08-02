@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Admin Login — QuikKart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background:var(--brand-purple-dark);">
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div style="text-align:center;margin-bottom:10px;">
+      <svg width="130" height="36" viewBox="0 0 140 40" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="36" height="36" rx="10" fill="#6A0DAD"/>
+        <path d="M9 12 L27 12 L11 24 L27 24" stroke="#FFD500" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="42" y="27" font-family="Arial" font-size="22" font-weight="800" fill="#6A0DAD">Quik</text>
+        <text x="88" y="27" font-family="Arial" font-size="22" font-weight="800" fill="#FFB300">Kart</text>
+      </svg>
+    </div>
+    <h2>Admin Portal</h2>
+    <p class="sub">Manage products, prices & orders</p>
+    <div id="msg"></div>
+    <div class="form-group"><label>Admin Email</label><input id="email" type="email" placeholder="admin@quikkart.com"></div>
+    <div class="form-group"><label>Password</label><input id="password" type="password" placeholder="••••••••"></div>
+    <button class="auth-submit" id="loginBtn">Login to Dashboard</button>
+    <div class="auth-switch"><a href="index.html">← Back to store</a></div>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:16px;text-align:center;">
+      Demo credentials: <b>admin@quikkart.com</b> / <b>Admin@123</b>
+    </p>
+  </div>
+</div>
+<script src="js/api.js"></script>
+<script>
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const msg = document.getElementById("msg");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  if (!email || !password) { msg.innerHTML = `<div class="error-msg">Enter admin email and password.</div>`; return; }
+
+  try {
+    const res = await Api.adminLogin({ email, password });
+    localStorage.setItem("qk_admin_token", res.token);
+    localStorage.setItem("qk_admin", JSON.stringify(res.admin));
+    window.location.href = "admin-dashboard.html";
+  } catch (err) {
+    msg.innerHTML = `<div class="error-msg">${err.message || "Invalid admin credentials."}</div>`;
+  }
+});
+</script>
+</body>
+</html>

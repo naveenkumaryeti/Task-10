@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: zepto-platform
+  namespace: argocd
+spec:
+  description: Zepto e-commerce 3-tier platform
+  sourceRepos:
+    - "https://github.com/naveenkumaryeti/zepto-3tier-platform.git"
+  destinations:
+    - namespace: zepto
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

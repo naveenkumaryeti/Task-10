@@ -1,0 +1,24 @@
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ $uri.html =404;
+    }
+
+    location /healthz {
+        return 200 "OK";
+        add_header Content-Type text/plain;
+    }
+
+    # Reverse-proxy API calls to the backend service.
+    # BACKEND_HOST is substituted at container start (envsubst) —
+    # "backend" for docker-compose, "backend-service" for Kubernetes.
+    location /api/ {
+        proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}

@@ -1,0 +1,18 @@
+# Fluent Bit -> Elasticsearch -> Kibana
+config:
+  outputs: |
+    [OUTPUT]
+        Name            es
+        Match           kube.*
+        Host            elasticsearch-master
+        Port            9200
+        Logstash_Format On
+        Logstash_Prefix zepto-logs
+        Retry_Limit     False
+  inputs: |
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/*zepto*.log
+        Parser            docker
+        Tag               kube.*
+        Refresh_Interval  5

@@ -1,0 +1,55 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backend-rolebinding
+  namespace: zepto
+subjects:
+  - kind: ServiceAccount
+    name: backend-sa
+    namespace: zepto
+roleRef:
+  kind: Role
+  name: backend-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: frontend-rolebinding
+  namespace: zepto
+subjects:
+  - kind: ServiceAccount
+    name: frontend-sa
+    namespace: zepto
+roleRef:
+  kind: Role
+  name: frontend-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: database-rolebinding
+  namespace: zepto
+subjects:
+  - kind: ServiceAccount
+    name: database-sa
+    namespace: zepto
+roleRef:
+  kind: Role
+  name: database-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-deployer-rolebinding
+  namespace: zepto
+subjects:
+  - kind: ServiceAccount
+    name: github-actions-sa
+    namespace: zepto
+roleRef:
+  kind: Role
+  name: ci-deployer-role
+  apiGroup: rbac.authorization.k8s.io

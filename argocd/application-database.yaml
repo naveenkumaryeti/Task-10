@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zepto-database
+  namespace: argocd
+spec:
+  project: zepto-platform
+  source:
+    repoURL: https://github.com/naveenkumaryeti/zepto-3tier-platform.git
+    targetRevision: main
+    path: helm/database
+    helm:
+      valueFiles:
+        - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zepto
+  syncPolicy:
+    automated:
+      prune: true       # deletes resources removed from Git
+      selfHeal: true     # reverts manual cluster drift back to Git state
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

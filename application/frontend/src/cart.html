@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Your Cart — QuikKart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<main class="container">
+  <h2 class="section-title">Your Cart</h2>
+  <div class="cart-page" id="cartPage"></div>
+</main>
+<div id="app-footer"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async function () {
+  renderHeader();
+  renderFooter();
+  await renderCart();
+
+  async function renderCart() {
+    const cart = Cart.get();
+    const ids = Object.keys(cart);
+    const page = document.getElementById("cartPage");
+
+    if (!ids.length) {
+      page.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">🛒<br>Your cart is empty.<br><a href="index.html" class="btn btn-primary" style="display:inline-block;margin-top:14px;">Start Shopping</a></div>`;
+      return;
+    }
+
+    const allProducts = await loadProducts();
+    const items = ids.map(id => ({ ...allProducts.find(p => p.id == id), qty: cart[id] })).filter(i => i.id);
+    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const deliveryFee = subtotal > 199 ? 0 : 25;
+    const total = subtotal + deliveryFee;
+
+    page.innerHTML = `
+      <div>
+        ${items.map(i => `
+          <div class="cart-item" data-id="${i.id}">
+            <img src="${i.image_url}" alt="${i.name}">
+            <div style="flex:1;">
+              <div class="cname">${i.name}</div>
+              <div class="cweight">${i.weight}</div>
+            </div>
+            <div class="qty-control"><button class="dec">−</button><span>${i.qty}</span><button class="inc">+</button></div>
+            <div style="width:70px;text-align:right;font-weight:700;">${currency(i.price * i.qty)}</div>
+          </div>`).join("")}
+      </div>
+      <div class="summary-card">
+        <h3 style="margin-bottom:14px;">Bill Summary</h3>
+        <div class="summary-row"><span>Item Total</span><span>${currency(subtotal)}</span></div>
+        <div class="summary-row"><span>Delivery Fee</span><span>${deliveryFee === 0 ? "FREE" : currency(deliveryFee)}</span></div>
+        <div class="summary-row total"><span>To Pay</span><span>${currency(total)}</span></div>
+        <a href="checkout.html" class="btn btn-primary" style="display:block;text-align:center;margin-top:16px;">Proceed to Checkout</a>
+      </div>`;
+
+    page.querySelectorAll(".cart-item").forEach(el => {
+      const id = el.dataset.id;
+      el.querySelector(".inc").addEventListener("click", () => { Cart.add(id, 1); renderCart(); });
+      el.querySelector(".dec").addEventListener("click", () => { Cart.setQty(id, (Cart.get()[id] || 0) - 1); renderCart(); });
+    });
+  }
+})();
+</script>
+</body>
+</html>

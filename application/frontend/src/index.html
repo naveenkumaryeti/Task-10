@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>QuikKart — Groceries delivered in 10 minutes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+
+<main class="container">
+  <div class="hero-banner">
+    <div>
+      <div class="badge">⚡ 10-MINUTE DELIVERY</div>
+      <h1>Groceries at your<br>doorstep, super fast</h1>
+      <p>Fresh fruits, dairy, snacks & essentials — delivered before you finish your coffee.</p>
+      <a href="category.html?id=1" class="btn" style="background:var(--brand-yellow);color:var(--brand-purple-dark);">Shop Now</a>
+    </div>
+    <div style="font-size:100px;">🛍️</div>
+  </div>
+
+  <h2 class="section-title">Shop by Category</h2>
+  <div class="category-grid" id="categoryGrid"></div>
+
+  <div id="sections"></div>
+</main>
+
+<div id="app-footer"></div>
+
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async function () {
+  renderHeader();
+  renderFooter();
+
+  const categories = await loadCategories();
+  document.getElementById("categoryGrid").innerHTML = categories.map(c => `
+    <a href="category.html?id=${c.id}" class="category-card">
+      <div class="emoji">${c.emoji || getCategoryEmoji(c.id)}</div>
+      <div class="cname">${c.name}</div>
+    </a>`).join("");
+
+  const products = await loadProducts();
+  const sectionsEl = document.getElementById("sections");
+  for (const cat of categories.slice(0, 4)) {
+    const items = products.filter(p => p.category_id == cat.id).slice(0, 6);
+    if (!items.length) continue;
+    const section = document.createElement("section");
+    section.innerHTML = `
+      <h2 class="section-title">${cat.emoji || getCategoryEmoji(cat.id)} ${cat.name}</h2>
+      <div class="product-grid">${items.map(productCardHTML).join("")}</div>`;
+    sectionsEl.appendChild(section);
+    wireProductGrid(section);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Manage Products — QuikKart Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+(async function () {
+  if (!requireAdmin()) return;
+  renderAdminSidebar("products");
+
+  let products = [];
+  try { products = await Api.adminGetProducts(); }
+  catch { products = DEMO_PRODUCTS; }
+
+  function row(p) {
+    const stockClass = p.stock < 20 ? "badge-stock-low" : "badge-stock-ok";
+    return `
+    <tr data-id="${p.id}">
+      <td><img src="${p.image_url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;"></td>
+      <td>${p.name}</td>
+      <td>${p.weight}</td>
+      <td><input type="number" class="edit-price" value="${p.price}"></td>
+      <td><input type="number" class="edit-mrp" value="${p.mrp}"></td>
+      <td><input type="number" class="edit-stock" value="${p.stock}"></td>
+      <td><span class="${stockClass}">${p.stock < 20 ? "Low Stock" : "In Stock"}</span></td>
+      <td>
+        <button class="icon-btn save save-row">Save</button>
+        <button class="icon-btn danger delete-row">Delete</button>
+      </td>
+    </tr>`;
+  }
+
+  function renderTable() {
+    document.getElementById("adminContent").innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <input id="prodSearch" placeholder="Search products..." style="padding:10px 14px;border-radius:8px;border:1.5px solid #e5e7eb;width:260px;">
+        <button class="icon-btn" id="addProductBtn">+ Add New Product</button>
+      </div>
+      <table class="admin-table">
+        <thead><tr><th>Img</th><th>Name</th><th>Weight</th><th>Price ₹</th><th>MRP ₹</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="prodBody">${products.map(row).join("")}</tbody>
+      </table>`;
+
+    document.getElementById("prodSearch").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      document.getElementById("prodBody").innerHTML = products.filter(p => p.name.toLowerCase().includes(q)).map(row).join("");
+      wireRows();
+    });
+    document.getElementById("addProductBtn").addEventListener("click", addProduct);
+    wireRows();
+  }
+
+  function wireRows() {
+    document.querySelectorAll(".save-row").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const tr = e.target.closest("tr");
+        const id = tr.dataset.id;
+        const payload = {
+          price: Number(tr.querySelector(".edit-price").value),
+          mrp: Number(tr.querySelector(".edit-mrp").value),
+          stock: Number(tr.querySelector(".edit-stock").value),
+        };
+        try {
+          await Api.adminUpdateProduct(id, payload);
+          Object.assign(products.find(p => p.id == id), payload);
+          alert("Product updated ✅");
+          renderTable();
+        } catch (err) {
+          Object.assign(products.find(p => p.id == id), payload); // offline demo mode
+          alert("Saved locally (offline demo mode).");
+          renderTable();
+        }
+      });
+    });
+    document.querySelectorAll(".delete-row").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const tr = e.target.closest("tr");
+        const id = tr.dataset.id;
+        if (!confirm("Delete this product?")) return;
+        try { await Api.adminDeleteProduct(id); } catch {}
+        products = products.filter(p => p.id != id);
+        renderTable();
+      });
+    });
+  }
+
+  function addProduct() {
+    const name = prompt("Product name:");
+    if (!name) return;
+    const price = Number(prompt("Price (₹):", "0")) || 0;
+    const mrp = Number(prompt("MRP (₹):", price)) || price;
+    const stock = Number(prompt("Stock quantity:", "0")) || 0;
+    const category_id = Number(prompt("Category ID (1-12, see Categories page):", "1")) || 1;
+    const newProduct = {
+      id: Date.now(), category_id, name, weight: "1 unit", price, mrp, stock,
+      image_url: `https://picsum.photos/seed/${encodeURIComponent(name)}/300/300`,
+    };
+    Api.adminCreateProduct(newProduct).catch(() => {});
+    products.unshift(newProduct);
+    renderTable();
+  }
+
+  renderTable();
+})();
+</script>
+</body>
+</html>

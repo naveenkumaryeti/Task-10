@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  database:
+    image: mysql:8.0
+    container_name: quikkart-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: zeptodb
+      MYSQL_USER: zepto
+      MYSQL_PASSWORD: zepto_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./application/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./application/backend
+    container_name: quikkart-backend
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DB_HOST: database
+      DB_USER: zepto
+      DB_PASSWORD: zepto_password
+      DB_NAME: zeptodb
+      JWT_SECRET: local_dev_secret_change_me
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./application/frontend
+    container_name: quikkart-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: 3000
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:

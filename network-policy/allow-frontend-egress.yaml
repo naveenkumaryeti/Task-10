@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-egress-to-backend
+  namespace: zepto
+spec:
+  podSelector:
+    matchLabels:
+      app: zepto-frontend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: zepto-backend
+      ports:
+        - protocol: TCP
+          port: 3000

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+db-secret-plain.yaml
+backend-secret-plain.yaml
+.env
+.DS_Store

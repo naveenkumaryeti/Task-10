@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>My Account — QuikKart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<main class="container" style="padding-bottom:60px;">
+  <h2 class="section-title">My Account</h2>
+  <div class="auth-card" style="max-width:100%;margin-bottom:24px;" id="userCard"></div>
+  <h3 class="section-title" style="font-size:16px;">Order History</h3>
+  <div id="orders"></div>
+</main>
+<div id="app-footer"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async function () {
+  renderHeader();
+  renderFooter();
+  const user = JSON.parse(localStorage.getItem("qk_user") || "null");
+  if (!user) { window.location.href = "login.html"; return; }
+
+  document.getElementById("userCard").innerHTML = `
+    <h3>${user.name}</h3>
+    <p class="sub">${user.email}</p>
+    <button class="btn btn-outline" id="logoutBtn" style="margin-top:12px;">Logout</button>`;
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("qk_token");
+    localStorage.removeItem("qk_user");
+    window.location.href = "index.html";
+  });
+
+  try {
+    const orders = await Api.getMyOrders();
+    const el = document.getElementById("orders");
+    el.innerHTML = orders.length
+      ? orders.map(o => `
+        <div class="cart-item">
+          <div style="flex:1;">
+            <div class="cname">Order #${o.id}</div>
+            <div class="cweight">${new Date(o.created_at).toLocaleString()} · ${o.payment_method}</div>
+          </div>
+          <div style="font-weight:700;">${currency(o.total_amount)}</div>
+        </div>`).join("")
+      : `<div class="empty-state">No orders yet.</div>`;
+  } catch {
+    document.getElementById("orders").innerHTML = `<div class="empty-state">Order history unavailable offline.</div>`;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: zepto-frontend
+description: Helm chart for Zepto frontend service
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

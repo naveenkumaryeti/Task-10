@@ -1,0 +1,8 @@
+{
+  "name": "zepto-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "mkdir -p dist && cp -r src/* dist/",
+    "start": "echo 'served by nginx'"
+  }
+}

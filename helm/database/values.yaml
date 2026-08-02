@@ -1,0 +1,49 @@
+# This chart wraps the official Bitnami MySQL chart.
+# Credentials are NEVER placed here — they come from the Kubernetes
+# Secret produced by Bitnami Sealed Secrets (see /secrets folder).
+mysql:
+  auth:
+    existingSecret: zepto-db-secret        # created by SealedSecret controller
+    database: zeptodb
+    username: zepto
+
+  architecture: standalone
+
+  primary:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    persistence:
+      enabled: true
+      size: 10Gi
+    podSecurityContext:
+      enabled: true
+      runAsNonRoot: true
+      runAsUser: 1001
+    containerSecurityContext:
+      enabled: true
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+    initdbScriptsConfigMap: zepto-db-init-scripts
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 15
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 30
+
+  serviceAccount:
+    create: true
+    name: database-sa

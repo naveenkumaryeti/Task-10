@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Admin Dashboard — QuikKart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+(async function () {
+  if (!requireAdmin()) return;
+  renderAdminSidebar("dashboard");
+
+  let stats = { total_products: 45, total_orders: 128, total_revenue: 34580, low_stock_count: 3, total_customers: 76 };
+  try { stats = await Api.adminGetStats(); } catch {}
+
+  document.getElementById("adminContent").innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-value">${stats.total_products}</div><div class="stat-label">Total Products</div></div>
+      <div class="stat-card"><div class="stat-value">${stats.total_orders}</div><div class="stat-label">Total Orders</div></div>
+      <div class="stat-card"><div class="stat-value">₹${stats.total_revenue}</div><div class="stat-label">Total Revenue</div></div>
+      <div class="stat-card"><div class="stat-value">${stats.total_customers}</div><div class="stat-label">Registered Customers</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--danger);">${stats.low_stock_count}</div><div class="stat-label">Low Stock Alerts</div></div>
+    </div>
+    <div class="summary-card">
+      <h3 style="margin-bottom:10px;">Quick Actions</h3>
+      <a href="admin-products.html" class="btn btn-primary" style="margin-right:10px;">Manage Products & Prices</a>
+      <a href="admin-orders.html" class="btn btn-outline">View Orders</a>
+    </div>`;
+})();
+</script>
+</body>
+</html>
