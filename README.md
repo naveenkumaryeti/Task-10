@@ -109,3 +109,4 @@ together without pods getting stuck `Pending`. See
 - **Two auth systems**: customer JWTs (`role: customer`) and admin JWTs (`role: admin`) are issued and verified separately — an admin token can never be used on customer routes or vice versa.
 - **Frontend↔backend routing**: Nginx uses an env-templated config (`BACKEND_HOST`/`BACKEND_PORT`) so the same image works unchanged in Docker Compose and Kubernetes.
 
+added
