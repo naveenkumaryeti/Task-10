@@ -3,7 +3,7 @@
 # Secret produced by Bitnami Sealed Secrets (see /secrets folder).
 mysql:
   auth:
-    existingSecret: zepto-db-secret        # created by SealedSecret controller
+    existingSecret: zepto-db-secret
     database: zeptodb
     username: zepto
 
@@ -17,27 +17,41 @@ mysql:
       limits:
         cpu: 1000m
         memory: 1Gi
+
     persistence:
       enabled: true
       size: 10Gi
+
     podSecurityContext:
       enabled: true
       runAsNonRoot: true
       runAsUser: 1001
+      fsGroup: 1001
+
     containerSecurityContext:
       enabled: true
       readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
       capabilities:
-        drop: ["ALL"]
+        drop:
+          - ALL
+
     initdbScriptsConfigMap: zepto-db-init-scripts
+
     readinessProbe:
       enabled: true
       initialDelaySeconds: 10
       periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+
     livenessProbe:
       enabled: true
       initialDelaySeconds: 30
       periodSeconds: 15
+      timeoutSeconds: 2
+      failureThreshold: 3
+
     startupProbe:
       enabled: true
       initialDelaySeconds: 10

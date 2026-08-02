@@ -4,10 +4,16 @@ metadata:
   name: backend-service
   labels:
     app: zepto-backend
+    tier: backend
+
 spec:
   type: {{ .Values.service.type }}
+
   selector:
     app: zepto-backend
+
   ports:
-    - port: {{ .Values.service.port }}
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}

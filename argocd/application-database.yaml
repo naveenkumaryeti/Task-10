@@ -3,22 +3,26 @@ kind: Application
 metadata:
   name: zepto-database
   namespace: argocd
+
 spec:
   project: zepto-platform
+
   source:
-    repoURL: https://github.com/naveenkumaryeti/zepto-3tier-platform.git
+    repoURL: https://github.com/naveenkumaryeti/Task-10.git
     targetRevision: main
     path: helm/database
     helm:
       valueFiles:
         - values-prod.yaml
+
   destination:
     server: https://kubernetes.default.svc
     namespace: zepto
+
   syncPolicy:
     automated:
-      prune: true       # deletes resources removed from Git
-      selfHeal: true     # reverts manual cluster drift back to Git state
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
     retry:

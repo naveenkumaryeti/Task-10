@@ -7,16 +7,21 @@ metadata:
   namespace: argocd
 spec:
   project: zepto-platform
+
   source:
-    repoURL: https://github.com/naveenkumaryeti/zepto-3tier-platform.git
+    repoURL: https://github.com/naveenkumaryeti/Task-10.git
     targetRevision: main
     path: argocd
     directory:
       include: "application-*.yaml"
+
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
+
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
