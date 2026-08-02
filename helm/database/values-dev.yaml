@@ -2,6 +2,10 @@
 # Credentials are NEVER placed here — they come from the Kubernetes
 # Secret produced by Bitnami Sealed Secrets (see /secrets folder).
 mysql:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/mysql
+    tag: 8.4.3-debian-12-r0
   auth:
     existingSecret: zepto-db-secret        # created by SealedSecret controller
     database: zeptodb
