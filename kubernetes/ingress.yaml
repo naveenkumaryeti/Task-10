@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - zepto-app.gt.tc
+        - zepto-app.duckdns.org
       secretName: zepto-tls-secret
   rules:
-    - host: zepto-app.gt.tc
+    - host: zepto-app.duckdns.org
       http:
         paths:
           - path: /api
