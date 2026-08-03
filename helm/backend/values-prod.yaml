@@ -1,6 +1,6 @@
 image:
   repository: asia-south1-docker.pkg.dev/zepto-with-gitops/prod-repo/zepto-backend
-  tag: 210361c166f379a2e4bb20287728bbafbf5232aa
+  tag: 53c4a9df4c73f38db6df8ef63aed7cca1961329c
   pullPolicy: IfNotPresent
 
 replicaCount: 3
