@@ -16,15 +16,21 @@
   renderAdminSidebar("products");
 
   let products = [];
-  try { products = await Api.adminGetProducts(); }
-  catch { products = DEMO_PRODUCTS; }
+  let categories = [];
+  try { products = await Api.adminGetProducts(); } catch { products = DEMO_PRODUCTS; }
+  try { categories = await Api.adminGetCategories(); } catch { categories = DEMO_CATEGORIES; }
+
+  function categoryName(id) {
+    const c = categories.find(c => c.id == id);
+    return c ? c.name : `Category #${id}`;
+  }
 
   function row(p) {
     const stockClass = p.stock < 20 ? "badge-stock-low" : "badge-stock-ok";
     return `
     <tr data-id="${p.id}">
       <td><img src="${p.image_url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;"></td>
-      <td>${p.name}</td>
+      <td>${p.name}<div style="font-size:11px;color:var(--muted);">${categoryName(p.category_id)}</div></td>
       <td>${p.weight}</td>
       <td><input type="number" class="edit-price" value="${p.price}"></td>
       <td><input type="number" class="edit-mrp" value="${p.mrp}"></td>
@@ -32,6 +38,7 @@
       <td><span class="${stockClass}">${p.stock < 20 ? "Low Stock" : "In Stock"}</span></td>
       <td>
         <button class="icon-btn save save-row">Save</button>
+        <button class="icon-btn edit-row" style="background:var(--brand-yellow);color:var(--brand-purple-dark);">Edit</button>
         <button class="icon-btn danger delete-row">Delete</button>
       </td>
     </tr>`;
@@ -53,7 +60,7 @@
       document.getElementById("prodBody").innerHTML = products.filter(p => p.name.toLowerCase().includes(q)).map(row).join("");
       wireRows();
     });
-    document.getElementById("addProductBtn").addEventListener("click", addProduct);
+    document.getElementById("addProductBtn").addEventListener("click", () => openProductModal(null));
     wireRows();
   }
 
@@ -67,22 +74,21 @@
           mrp: Number(tr.querySelector(".edit-mrp").value),
           stock: Number(tr.querySelector(".edit-stock").value),
         };
-        try {
-          await Api.adminUpdateProduct(id, payload);
-          Object.assign(products.find(p => p.id == id), payload);
-          alert("Product updated ✅");
-          renderTable();
-        } catch (err) {
-          Object.assign(products.find(p => p.id == id), payload); // offline demo mode
-          alert("Saved locally (offline demo mode).");
-          renderTable();
-        }
+        try { await Api.adminUpdateProduct(id, payload); } catch {}
+        Object.assign(products.find(p => p.id == id), payload);
+        alert("Product updated ✅");
+        renderTable();
+      });
+    });
+    document.querySelectorAll(".edit-row").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const id = e.target.closest("tr").dataset.id;
+        openProductModal(products.find(p => p.id == id));
       });
     });
     document.querySelectorAll(".delete-row").forEach(btn => {
       btn.addEventListener("click", async (e) => {
-        const tr = e.target.closest("tr");
-        const id = tr.dataset.id;
+        const id = e.target.closest("tr").dataset.id;
         if (!confirm("Delete this product?")) return;
         try { await Api.adminDeleteProduct(id); } catch {}
         products = products.filter(p => p.id != id);
@@ -91,20 +97,93 @@
     });
   }
 
-  function addProduct() {
-    const name = prompt("Product name:");
-    if (!name) return;
-    const price = Number(prompt("Price (₹):", "0")) || 0;
-    const mrp = Number(prompt("MRP (₹):", price)) || price;
-    const stock = Number(prompt("Stock quantity:", "0")) || 0;
-    const category_id = Number(prompt("Category ID (1-12, see Categories page):", "1")) || 1;
-    const newProduct = {
-      id: Date.now(), category_id, name, weight: "1 unit", price, mrp, stock,
-      image_url: `https://picsum.photos/seed/${encodeURIComponent(name)}/300/300`,
-    };
-    Api.adminCreateProduct(newProduct).catch(() => {});
-    products.unshift(newProduct);
-    renderTable();
+  // ---------- Add / Edit Modal ----------
+  function openProductModal(product) {
+    const isEdit = !!product;
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <h3>${isEdit ? "Edit Product" : "Add New Product"}</h3>
+        <div class="form-group">
+          <label>Product Image</label>
+          <img class="img-preview" id="imgPreview" src="${product?.image_url || "https://picsum.photos/seed/newproduct/300/300"}">
+          <div class="img-tabs">
+            <button type="button" id="tabUrl" class="active">Image URL</button>
+            <button type="button" id="tabUpload">Upload File</button>
+          </div>
+          <input id="imgUrlInput" placeholder="https://..." value="${product?.image_url || ""}">
+          <input id="imgFileInput" type="file" accept="image/*" style="display:none;margin-top:8px;">
+        </div>
+        <div class="form-group"><label>Name</label><input id="fName" value="${product?.name || ""}"></div>
+        <div class="form-group"><label>Category</label>
+          <select id="fCategory">${categories.map(c => `<option value="${c.id}" ${product?.category_id == c.id ? "selected" : ""}>${c.emoji || ""} ${c.name}</option>`).join("")}</select>
+        </div>
+        <div class="form-group"><label>Weight / Unit (e.g. "1 kg", "500 ml")</label><input id="fWeight" value="${product?.weight || ""}"></div>
+        <div class="form-group"><label>Price ₹</label><input id="fPrice" type="number" value="${product?.price || ""}"></div>
+        <div class="form-group"><label>MRP ₹</label><input id="fMrp" type="number" value="${product?.mrp || ""}"></div>
+        <div class="form-group"><label>Stock Quantity</label><input id="fStock" type="number" value="${product?.stock || ""}"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" id="cancelModal">Cancel</button>
+          <button class="btn btn-primary" id="saveModal">${isEdit ? "Save Changes" : "Add Product"}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const imgPreview = overlay.querySelector("#imgPreview");
+    const imgUrlInput = overlay.querySelector("#imgUrlInput");
+    const imgFileInput = overlay.querySelector("#imgFileInput");
+    const tabUrl = overlay.querySelector("#tabUrl");
+    const tabUpload = overlay.querySelector("#tabUpload");
+
+    tabUrl.addEventListener("click", () => {
+      tabUrl.classList.add("active"); tabUpload.classList.remove("active");
+      imgUrlInput.style.display = "block"; imgFileInput.style.display = "none";
+    });
+    tabUpload.addEventListener("click", () => {
+      tabUpload.classList.add("active"); tabUrl.classList.remove("active");
+      imgUrlInput.style.display = "none"; imgFileInput.style.display = "block";
+    });
+    imgUrlInput.addEventListener("input", () => { if (imgUrlInput.value) imgPreview.src = imgUrlInput.value; });
+    imgFileInput.addEventListener("change", () => {
+      const file = imgFileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { imgPreview.src = reader.result; imgPreview.dataset.base64 = reader.result; };
+      reader.readAsDataURL(file);
+    });
+
+    overlay.querySelector("#cancelModal").addEventListener("click", () => overlay.remove());
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+
+    overlay.querySelector("#saveModal").addEventListener("click", async () => {
+      const finalImage = imgPreview.dataset.base64 || imgUrlInput.value || imgPreview.src;
+      const payload = {
+        name: overlay.querySelector("#fName").value.trim(),
+        category_id: Number(overlay.querySelector("#fCategory").value),
+        weight: overlay.querySelector("#fWeight").value.trim(),
+        price: Number(overlay.querySelector("#fPrice").value) || 0,
+        mrp: Number(overlay.querySelector("#fMrp").value) || 0,
+        stock: Number(overlay.querySelector("#fStock").value) || 0,
+        image_url: finalImage,
+      };
+      if (!payload.name) { alert("Product name is required."); return; }
+
+      try {
+        if (isEdit) {
+          await Api.adminUpdateProduct(product.id, payload);
+          Object.assign(product, payload);
+        } else {
+          const res = await Api.adminCreateProduct(payload);
+          products.unshift({ id: res.id || Date.now(), ...payload });
+        }
+      } catch {
+        if (isEdit) Object.assign(product, payload);
+        else products.unshift({ id: Date.now(), ...payload });
+      }
+      overlay.remove();
+      renderTable();
+    });
   }
 
   renderTable();

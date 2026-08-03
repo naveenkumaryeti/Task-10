@@ -15,6 +15,7 @@ function renderAdminSidebar(active) {
     { id: "products", href: "admin-products.html", label: "🛒 Products & Pricing" },
     { id: "categories", href: "admin-categories.html", label: "🗂️ Categories" },
     { id: "orders", href: "admin-orders.html", label: "📦 Orders" },
+    { id: "customers", href: "admin-customers.html", label: "👥 Customers" },
   ];
   document.getElementById("app-header").innerHTML = `
     <div class="admin-shell">

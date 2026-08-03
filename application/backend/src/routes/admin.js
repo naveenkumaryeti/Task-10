@@ -112,4 +112,16 @@ router.get("/orders", async (req, res) => {
   res.json(rows);
 });
 
+// ---------- Registered customers (view all) ----------
+router.get("/customers", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, email, phone, created_at FROM users ORDER BY created_at DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load customers", details: err.message });
+  }
+});
+
 module.exports = router;

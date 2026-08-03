@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS products (
   price DECIMAL(10,2) NOT NULL,
   mrp DECIMAL(10,2) NOT NULL,
   stock INT DEFAULT 0,
-  image_url VARCHAR(500),
+  image_url LONGTEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );

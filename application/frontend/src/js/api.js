@@ -43,4 +43,5 @@ const Api = {
   adminGetStats: () => apiRequest("/admin/stats"),
   adminGetCategories: () => apiRequest("/admin/categories"),
   adminCreateCategory: (payload) => apiRequest("/admin/categories", { method: "POST", body: JSON.stringify(payload) }),
+  adminGetCustomers: () => apiRequest("/admin/customers"),
 };
