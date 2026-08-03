@@ -59,4 +59,25 @@ router.get("/my", verifyToken, async (req, res) => {
   }
 });
 
+// ---------- Line items for a single order (owner only) ----------
+router.get("/:id/items", verifyToken, async (req, res) => {
+  try {
+    const [orderRows] = await pool.query(
+      "SELECT id FROM orders WHERE id = ? AND user_id = ?",
+      [req.params.id, req.user.id]
+    );
+    if (!orderRows.length) return res.status(404).json({ error: "Order not found" });
+
+    const [items] = await pool.query(
+      `SELECT oi.quantity, oi.price, p.name, p.weight, p.image_url
+       FROM order_items oi JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = ?`,
+      [req.params.id]
+    );
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load order items", details: err.message });
+  }
+});
+
 module.exports = router;

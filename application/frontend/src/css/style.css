@@ -161,3 +161,45 @@ table.admin-table input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radiu
 .avatar-upload-label{display:inline-block;background:#fff;border:1.5px solid var(--brand-purple);color:var(--brand-purple);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;}
 .avatar-upload-label input{display:none;}
 .field-locked{background:#F3F4F6;color:var(--muted);cursor:not-allowed;}
+
+/* ---------- Header user dropdown ---------- */
+.user-menu{position:relative;}
+.user-menu-btn{display:flex;align-items:center;gap:8px;}
+.user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);min-width:180px;padding:8px;display:none;z-index:100;}
+.user-dropdown.open{display:block;}
+.user-dropdown a{display:block;padding:10px 14px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--text);}
+.user-dropdown a:hover{background:var(--bg);color:var(--brand-purple);}
+
+/* ---------- High-impact hero (index page) ---------- */
+.hero-banner{position:relative;background:linear-gradient(120deg,#7B1FD1 0%, #4B0082 50%, #2d0a5c 100%);background-size:200% 200%;animation:heroShift 8s ease-in-out infinite;isolation:isolate;}
+.hero-banner::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 20%, rgba(255,213,0,.18), transparent 45%),radial-gradient(circle at 10% 90%, rgba(255,255,255,.08), transparent 40%);pointer-events:none;z-index:0;}
+.hero-banner > *{position:relative;z-index:1;}
+@keyframes heroShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.hero-banner .badge{animation:badgePulse 2.4s ease-in-out infinite;box-shadow:0 0 0 rgba(255,213,0,.5);}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,213,0,.45);}50%{box-shadow:0 0 0 10px rgba(255,213,0,0);}}
+.hero-banner h1{background:linear-gradient(90deg,#fff,#ffe9a8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-banner .btn{transition:transform .2s ease, box-shadow .2s ease;}
+.hero-banner .btn:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.25);}
+.hero-float{animation:heroFloat 3.5s ease-in-out infinite;}
+@keyframes heroFloat{0%,100%{transform:translateY(0px) rotate(-2deg);}50%{transform:translateY(-14px) rotate(2deg);}}
+
+/* ---------- Trust strip ---------- */
+.trust-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:28px 0;}
+.trust-item{background:#fff;border-radius:14px;padding:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:transform .25s ease, box-shadow .25s ease;}
+.trust-item:hover{transform:translateY(-6px);box-shadow:0 12px 24px rgba(106,13,173,.12);}
+.trust-item .t-icon{font-size:30px;margin-bottom:8px;}
+.trust-item .t-value{font-weight:800;font-size:20px;color:var(--brand-purple);}
+.trust-item .t-label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ---------- Scroll reveal ---------- */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease, transform .6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* ---------- Category card shine + product card polish ---------- */
+.category-card{position:relative;overflow:hidden;}
+.category-card::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:left .6s ease;}
+.category-card:hover::after{left:130%;}
+.category-card:hover .emoji{transform:scale(1.15);}
+.category-card .emoji{transition:transform .25s ease;display:inline-block;}
+.product-card .p-img img{transition:transform .4s ease;}
+.product-card:hover .p-img img{transform:scale(1.08);}

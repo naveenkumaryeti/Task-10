@@ -1,7 +1,19 @@
 function renderHeader(activeCategoryId) {
   const user = JSON.parse(localStorage.getItem("qk_user") || "null");
-  const authLink = user
-    ? `<a href="account.html" class="btn btn-outline">Hi, ${user.name.split(" ")[0]}</a>`
+  const avatarHTML = user
+    ? (user.profile_pic
+        ? `<img src="${user.profile_pic}" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">`
+        : `<span style="width:26px;height:26px;border-radius:50%;background:var(--brand-purple);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">${user.name.charAt(0).toUpperCase()}</span>`)
+    : "";
+  const authBlock = user
+    ? `<div class="user-menu" id="userMenu">
+        <button class="btn btn-outline user-menu-btn" id="userMenuBtn">${avatarHTML}<span>Hi, ${user.name.split(" ")[0]}</span> ▾</button>
+        <div class="user-dropdown" id="userDropdown">
+          <a href="account.html">👤 Profile</a>
+          <a href="account.html?tab=orders">📦 My Orders</a>
+          <a href="#" id="headerLogout">🚪 Logout</a>
+        </div>
+      </div>`
     : `<a href="login.html" class="btn btn-outline">Login</a>`;
 
   document.getElementById("app-header").innerHTML = `
@@ -30,7 +42,7 @@ function renderHeader(activeCategoryId) {
           <input id="globalSearch" type="text" placeholder="Search for milk, fruits, snacks...">
         </div>
         <div class="header-actions">
-          ${authLink}
+          ${authBlock}
           <a href="cart.html" class="cart-btn">🛒 Cart <span class="cart-count" id="cartCount">0</span></a>
         </div>
       </div>
@@ -50,6 +62,22 @@ function renderHeader(activeCategoryId) {
   document.getElementById("categoryStrip").innerHTML = DEMO_CATEGORIES.map(
     (c) => `<a href="category.html?id=${c.id}" class="${activeCategoryId == c.id ? "active" : ""}">${c.emoji} ${c.name}</a>`
   ).join("");
+
+  if (user) {
+    const menuBtn = document.getElementById("userMenuBtn");
+    const dropdown = document.getElementById("userDropdown");
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("open");
+    });
+    document.addEventListener("click", () => dropdown.classList.remove("open"));
+    document.getElementById("headerLogout").addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("qk_token");
+      localStorage.removeItem("qk_user");
+      window.location.href = "index.html";
+    });
+  }
 
   Cart.updateBadge();
 }

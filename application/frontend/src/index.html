@@ -17,11 +17,18 @@
       <p>Fresh fruits, dairy, snacks & essentials — delivered before you finish your coffee.</p>
       <a href="category.html?id=1" class="btn" style="background:var(--brand-yellow);color:var(--brand-purple-dark);">Shop Now</a>
     </div>
-    <div style="font-size:100px;">🛍️</div>
+    <div class="hero-float" style="font-size:100px;">🛍️</div>
   </div>
 
-  <h2 class="section-title">Shop by Category</h2>
-  <div class="category-grid" id="categoryGrid"></div>
+  <div class="trust-strip reveal">
+    <div class="trust-item"><div class="t-icon">⚡</div><div class="t-value">10 min</div><div class="t-label">Average delivery time</div></div>
+    <div class="trust-item"><div class="t-icon">🛒</div><div class="t-value">1000+</div><div class="t-label">Products in stock</div></div>
+    <div class="trust-item"><div class="t-icon">⭐</div><div class="t-value">4.8/5</div><div class="t-label">Customer rating</div></div>
+    <div class="trust-item"><div class="t-icon">📍</div><div class="t-value">Hyderabad</div><div class="t-label">Now delivering in</div></div>
+  </div>
+
+  <h2 class="section-title reveal">Shop by Category</h2>
+  <div class="category-grid reveal" id="categoryGrid"></div>
 
   <div id="sections"></div>
 </main>
@@ -50,12 +57,24 @@
     const items = products.filter(p => p.category_id == cat.id).slice(0, 6);
     if (!items.length) continue;
     const section = document.createElement("section");
+    section.className = "reveal";
     section.innerHTML = `
       <h2 class="section-title">${cat.emoji || getCategoryEmoji(cat.id)} ${cat.name}</h2>
       <div class="product-grid">${items.map(productCardHTML).join("")}</div>`;
     sectionsEl.appendChild(section);
     wireProductGrid(section);
   }
+
+  // Scroll-reveal: fade+slide sections into view as the user scrolls
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
 })();
 </script>
 </body>

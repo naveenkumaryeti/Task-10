@@ -18,29 +18,14 @@
   let categories = [];
   try { categories = await Api.adminGetCategories(); } catch { categories = DEMO_CATEGORIES; }
 
-  function render() {
-    document.getElementById("adminContent").innerHTML = `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-        <button class="icon-btn" id="addCatBtn">+ Add Category</button>
-      </div>
-      <table class="admin-table">
-        <thead><tr><th>Icon</th><th>Name</th><th>Category ID</th></tr></thead>
-        <tbody>${categories.map(c => `<tr><td style="font-size:22px;">${c.emoji || "🛒"}</td><td>${c.name}</td><td>${c.id}</td></tr>`).join("")}</tbody>
-      </table>`;
-    document.getElementById("addCatBtn").addEventListener("click", addCategory);
-  }
-
-  function addCategory() {
-    const name = prompt("Category name:");
-    if (!name) return;
-    const emoji = prompt("Emoji icon (e.g. 🥦):", "🛒") || "🛒";
-    const newCat = { id: Date.now(), name, emoji };
-    Api.adminCreateCategory(newCat).catch(() => {});
-    categories.push(newCat);
-    render();
-  }
-
-  render();
+  document.getElementById("adminContent").innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+      <a href="admin-category-add.html" class="icon-btn">+ Add Category</a>
+    </div>
+    <table class="admin-table">
+      <thead><tr><th>Icon</th><th>Name</th><th>Category ID</th></tr></thead>
+      <tbody>${categories.map(c => `<tr><td style="font-size:22px;">${c.emoji || "🛒"}</td><td>${c.name}</td><td>${c.id}</td></tr>`).join("")}</tbody>
+    </table>`;
 })();
 </script>
 </body>

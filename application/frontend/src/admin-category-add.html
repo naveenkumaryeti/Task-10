@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Add Category — QuikKart Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+(async function () {
+  if (!requireAdmin()) return;
+  renderAdminSidebar("categories");
+
+  document.getElementById("adminContent").innerHTML = `
+    <div class="summary-card" style="max-width:460px;">
+      <h3 style="margin-bottom:16px;">Add New Category</h3>
+      <div id="msg"></div>
+      <div class="form-group"><label>Category Name</label><input id="nameInput" placeholder="e.g. Baby Care"></div>
+      <div class="form-group"><label>Emoji Icon</label><input id="emojiInput" placeholder="🛒" value="🛒"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="auth-submit" id="saveBtn" style="width:auto;padding:12px 24px;">Save Category</button>
+        <a href="admin-categories.html" class="btn btn-outline" style="padding:12px 24px;">Cancel</a>
+      </div>
+    </div>`;
+
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    const msg = document.getElementById("msg");
+    const name = document.getElementById("nameInput").value.trim();
+    const emoji = document.getElementById("emojiInput").value.trim() || "🛒";
+    if (!name) { msg.innerHTML = `<div class="error-msg">Category name is required.</div>`; return; }
+    try {
+      await Api.adminCreateCategory({ id: Date.now(), name, emoji });
+      window.location.href = "admin-categories.html";
+    } catch (err) {
+      msg.innerHTML = `<div class="error-msg">${err.message}</div>`;
+    }
+  });
+})();
+</script>
+</body>
+</html>

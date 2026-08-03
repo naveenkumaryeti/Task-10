@@ -158,7 +158,7 @@ router.get("/orders", async (req, res) => {
   res.json(rows);
 });
 
-// ---------- Registered customers (view all) ----------
+// ---------- Registered customers (view / add / remove) ----------
 router.get("/customers", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -167,6 +167,38 @@ router.get("/customers", async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: "Failed to load customers", details: err.message });
+  }
+});
+
+// Admin manually adds a customer account
+router.post("/customers", async (req, res) => {
+  const { name, email, phone, password } = req.body;
+  if (!name || !email || !phone || !password) {
+    return res.status(400).json({ error: "Name, email, phone and password are required" });
+  }
+  if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+  try {
+    const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    if (existing.length) return res.status(409).json({ error: "Email already registered" });
+
+    const hash = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      "INSERT INTO users (name, email, phone, password_hash) VALUES (?, ?, ?, ?)",
+      [name, email, phone, hash]
+    );
+    res.status(201).json({ id: result.insertId, name, email, phone });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add customer", details: err.message });
+  }
+});
+
+// Admin removes a customer account
+router.delete("/customers/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM users WHERE id = ?", [req.params.id]);
+    res.json({ message: "Customer removed" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to remove customer", details: err.message });
   }
 });
 

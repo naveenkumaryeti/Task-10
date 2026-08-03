@@ -99,29 +99,70 @@
   renderCard();
 
   let ordersLoaded = false;
-  document.getElementById("viewOrdersBtn").addEventListener("click", async () => {
-    const el = document.getElementById("orders");
-    const visible = el.style.display !== "none";
-    if (visible) { el.style.display = "none"; return; }
-    el.style.display = "block";
+  const ordersEl = document.getElementById("orders");
+
+  async function openOrders() {
+    ordersEl.style.display = "block";
     if (ordersLoaded) return;
     ordersLoaded = true;
     try {
       const orders = await Api.getMyOrders();
-      el.innerHTML = orders.length
+      ordersEl.innerHTML = orders.length
         ? orders.map(o => `
-          <div class="cart-item">
-            <div style="flex:1;">
-              <div class="cname">Order #${o.id}</div>
-              <div class="cweight">${new Date(o.created_at).toLocaleString()} · ${o.payment_method}</div>
+          <div class="cart-item order-row" data-id="${o.id}" style="cursor:pointer;flex-direction:column;align-items:stretch;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="flex:1;">
+                <div class="cname">Order #${o.id} <span style="font-weight:400;color:var(--muted);font-size:12px;">(click to view items ▾)</span></div>
+                <div class="cweight">${new Date(o.created_at).toLocaleString()} · ${o.payment_method}</div>
+              </div>
+              <div style="font-weight:700;">${currency(o.total_amount)}</div>
             </div>
-            <div style="font-weight:700;">${currency(o.total_amount)}</div>
+            <div class="order-items" id="order-items-${o.id}" style="display:none;margin-top:12px;border-top:1px dashed #ddd;padding-top:12px;"></div>
           </div>`).join("")
         : `<div class="empty-state">No orders yet.</div>`;
+
+      ordersEl.querySelectorAll(".order-row").forEach(row => {
+        row.addEventListener("click", async () => {
+          const id = row.dataset.id;
+          const itemsEl = document.getElementById(`order-items-${id}`);
+          const visible = itemsEl.style.display !== "none";
+          if (visible) { itemsEl.style.display = "none"; return; }
+          itemsEl.style.display = "block";
+          if (itemsEl.dataset.loaded) return;
+          itemsEl.dataset.loaded = "1";
+          try {
+            const items = await Api.getOrderItems(id);
+            itemsEl.innerHTML = items.length
+              ? items.map(it => `
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                  <img src="${it.image_url}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:600;font-size:13.5px;">${it.name}</div>
+                    <div style="font-size:12px;color:var(--muted);">${it.weight} · Qty ${it.quantity}</div>
+                  </div>
+                  <div style="font-weight:700;">${currency(it.price * it.quantity)}</div>
+                </div>`).join("")
+              : `<div class="empty-state" style="padding:16px;">No item details found.</div>`;
+          } catch {
+            itemsEl.innerHTML = `<div class="empty-state" style="padding:16px;">Could not load items.</div>`;
+          }
+        });
+      });
     } catch {
-      el.innerHTML = `<div class="empty-state">Order history unavailable offline.</div>`;
+      ordersEl.innerHTML = `<div class="empty-state">Order history unavailable offline.</div>`;
     }
+  }
+
+  document.getElementById("viewOrdersBtn").addEventListener("click", () => {
+    const visible = ordersEl.style.display !== "none";
+    if (visible) { ordersEl.style.display = "none"; return; }
+    openOrders();
   });
+
+  // Deep-link support: account.html?tab=orders auto-opens the orders list
+  if (new URLSearchParams(window.location.search).get("tab") === "orders") {
+    openOrders();
+  }
 })();
 </script>
 </body>

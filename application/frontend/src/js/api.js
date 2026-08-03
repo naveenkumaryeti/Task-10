@@ -37,6 +37,7 @@ const Api = {
   // Orders
   placeOrder: (payload) => apiRequest("/orders", { method: "POST", body: JSON.stringify(payload) }),
   getMyOrders: () => apiRequest("/orders/my"),
+  getOrderItems: (id) => apiRequest(`/orders/${id}/items`),
 
   // Admin (protected)
   adminGetProducts: () => apiRequest("/admin/products"),
@@ -48,6 +49,8 @@ const Api = {
   adminGetCategories: () => apiRequest("/admin/categories"),
   adminCreateCategory: (payload) => apiRequest("/admin/categories", { method: "POST", body: JSON.stringify(payload) }),
   adminGetCustomers: () => apiRequest("/admin/customers"),
+  adminAddCustomer: (payload) => apiRequest("/admin/customers", { method: "POST", body: JSON.stringify(payload) }),
+  adminDeleteCustomer: (id) => apiRequest(`/admin/customers/${id}`, { method: "DELETE" }),
 
   // Admin profile (name / password / profile pic — email is never editable)
   adminGetMyProfile: () => apiRequest("/admin/me"),
