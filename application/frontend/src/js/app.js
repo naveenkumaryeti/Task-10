@@ -33,9 +33,9 @@ function renderHeader(activeCategoryId) {
             <text x="88" y="27" font-family="Arial" font-size="22" font-weight="800" fill="#FFB300">Kart</text>
           </svg>
         </a>
-        <div class="location-box">
+        <div class="location-box" id="locationBox">
           <div class="loc-title">📍 Delivery in 10 mins</div>
-          <div class="loc-sub">Hyderabad, Telangana, India</div>
+          <div class="loc-sub" id="locSub">Detecting location...</div>
         </div>
         <div class="search-box">
           <span>🔍</span>
@@ -58,6 +58,8 @@ function renderHeader(activeCategoryId) {
       window.location.href = `search.html?q=${encodeURIComponent(search.value.trim())}`;
     }
   });
+
+  initLiveLocation();
 
   document.getElementById("categoryStrip").innerHTML = DEMO_CATEGORIES.map(
     (c) => `<a href="category.html?id=${c.id}" class="${activeCategoryId == c.id ? "active" : ""}">${c.emoji} ${c.name}</a>`
@@ -188,4 +190,53 @@ function refreshCartControl(card, id) {
   holder.innerHTML = qty > 0
     ? `<div class="qty-control"><button class="dec">−</button><span>${qty}</span><button class="inc">+</button></div>`
     : `<button class="add-btn add-to-cart">ADD</button>`;
+}
+
+
+// ---------------------------------------------------------------------
+// Real-time delivery location — uses the browser Geolocation API, then
+// reverse-geocodes the coordinates to a human-readable city/state via
+// OpenStreetMap's free Nominatim API (no API key required).
+// ---------------------------------------------------------------------
+function initLiveLocation() {
+  const locSub = document.getElementById("locSub");
+  if (!locSub) return;
+
+  if (!("geolocation" in navigator)) {
+    locSub.textContent = "Hyderabad, Telangana, India";
+    return;
+  }
+
+  // Cache the resolved location for 15 minutes so we don't re-hit the
+  // geolocation prompt / reverse-geocode API on every single page load.
+  const cached = JSON.parse(sessionStorage.getItem("qk_location") || "null");
+  if (cached && Date.now() - cached.ts < 15 * 60 * 1000) {
+    locSub.textContent = cached.label;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
+        );
+        const data = await res.json();
+        const a = data.address || {};
+        const city = a.city || a.town || a.village || a.suburb || a.county || "Your area";
+        const state = a.state || "";
+        const label = state ? `${city}, ${state}` : city;
+        locSub.textContent = label;
+        sessionStorage.setItem("qk_location", JSON.stringify({ label, ts: Date.now() }));
+      } catch {
+        locSub.textContent = "Location detected";
+      }
+    },
+    () => {
+      // Permission denied or unavailable — fall back gracefully.
+      locSub.textContent = "Enable location for accurate delivery";
+    },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+  );
 }

@@ -203,3 +203,15 @@ table.admin-table input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radiu
 .category-card .emoji{transition:transform .25s ease;display:inline-block;}
 .product-card .p-img img{transition:transform .4s ease;}
 .product-card:hover .p-img img{transform:scale(1.08);}
+
+/* ---------- Promo / Ad Banners (home page) ---------- */
+.promo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0;}
+.promo-card{border-radius:16px;padding:22px;color:#fff;position:relative;overflow:hidden;min-height:120px;display:flex;flex-direction:column;justify-content:center;}
+.promo-card .promo-tag{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;opacity:.85;margin-bottom:6px;}
+.promo-card h3{font-size:19px;font-weight:800;margin-bottom:4px;line-height:1.25;}
+.promo-card p{font-size:12.5px;opacity:.9;}
+.promo-card .promo-emoji{position:absolute;right:12px;bottom:6px;font-size:56px;opacity:.25;}
+.promo-1{background:linear-gradient(135deg,#16A34A,#0d7a37);}
+.promo-2{background:linear-gradient(135deg,#E11D48,#a3123a);}
+.promo-3{background:linear-gradient(135deg,#2563EB,#1a3fa3);}
+@media(max-width:768px){.promo-grid{grid-template-columns:1fr;}}
