@@ -1,5 +1,5 @@
 -- Auto-generated to stay in sync with frontend demo catalog
-CREATE DATABASE IF NOT EXISTS zeptodb;
+CREATE DATABASE IF NOT EXISTS zeptodb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE zeptodb;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS categories (
   id INT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   emoji VARCHAR(10) DEFAULT '🛒'
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS products (
   id INT PRIMARY KEY,
