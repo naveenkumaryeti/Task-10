@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>My Profile — QuikKart Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+(async function () {
+  if (!requireAdmin()) return;
+  renderAdminSidebar("");
+
+  let admin = JSON.parse(localStorage.getItem("qk_admin") || "null");
+  try {
+    admin = await Api.adminGetMyProfile();
+    localStorage.setItem("qk_admin", JSON.stringify(admin));
+  } catch { /* keep cached copy if offline */ }
+
+  function renderCard() {
+    const avatarHTML = admin.profile_pic
+      ? `<img src="${admin.profile_pic}" class="avatar-circle" alt="">`
+      : `<div class="avatar-placeholder">${admin.name.charAt(0).toUpperCase()}</div>`;
+
+    document.getElementById("adminContent").innerHTML = `
+      <div class="summary-card" style="max-width:460px;">
+        <div class="avatar-wrap">
+          ${avatarHTML}
+          <label class="avatar-upload-label">Change Photo
+            <input type="file" id="picInput" accept="image/*">
+          </label>
+        </div>
+        <div id="msg"></div>
+        <div class="form-group"><label>Name</label><input id="nameInput" value="${admin.name}"></div>
+        <div class="form-group"><label>Email (cannot be changed)</label><input value="${admin.email}" class="field-locked" disabled></div>
+        <div class="form-group"><label>New Password (leave blank to keep current)</label><input id="passwordInput" type="password" placeholder="••••••••"></div>
+        <button class="auth-submit" id="saveBtn" style="max-width:220px;">Save Changes</button>
+      </div>`;
+
+    document.getElementById("picInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const res = await Api.adminUpdateMyProfile({ profile_pic: reader.result });
+          admin = res.admin;
+          localStorage.setItem("qk_admin", JSON.stringify(admin));
+          renderCard();
+        } catch (err) {
+          document.getElementById("msg").innerHTML = `<div class="error-msg">${err.message}</div>`;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("msg");
+      const payload = { name: document.getElementById("nameInput").value.trim() };
+      const pwd = document.getElementById("passwordInput").value;
+      if (pwd) payload.password = pwd;
+      try {
+        const res = await Api.adminUpdateMyProfile(payload);
+        admin = res.admin;
+        localStorage.setItem("qk_admin", JSON.stringify(admin));
+        renderCard();
+        document.getElementById("msg").innerHTML = `<div class="success-msg">Profile updated.</div>`;
+      } catch (err) {
+        msg.innerHTML = `<div class="error-msg">${err.message}</div>`;
+      }
+    });
+  }
+  renderCard();
+})();
+</script>
+</body>
+</html>

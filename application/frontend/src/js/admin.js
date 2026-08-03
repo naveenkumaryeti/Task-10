@@ -17,6 +17,10 @@ function renderAdminSidebar(active) {
     { id: "orders", href: "admin-orders.html", label: "📦 Orders" },
     { id: "customers", href: "admin-customers.html", label: "👥 Customers" },
   ];
+  const avatarHTML = admin && admin.profile_pic
+    ? `<img src="${admin.profile_pic}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;">`
+    : `<div style="width:34px;height:34px;border-radius:50%;background:var(--brand-purple);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;">${admin ? admin.name.charAt(0).toUpperCase() : "A"}</div>`;
+
   document.getElementById("app-header").innerHTML = `
     <div class="admin-shell">
       <aside class="admin-sidebar">
@@ -36,7 +40,10 @@ function renderAdminSidebar(active) {
       <div class="admin-main" id="adminMain">
         <div class="admin-topbar">
           <h2>${links.find(l => l.id === active)?.label.replace(/^\S+\s/, "") || ""}</h2>
-          <div>👋 ${admin ? admin.name : ""}</div>
+          <a href="admin-profile.html" style="display:flex;align-items:center;gap:10px;color:inherit;">
+            <span>👋 ${admin ? admin.name : ""}</span>
+            ${avatarHTML}
+          </a>
         </div>
         <div id="adminContent"></div>
       </div>

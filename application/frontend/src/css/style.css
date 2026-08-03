@@ -153,3 +153,11 @@ table.admin-table input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radiu
   .admin-shell{flex-direction:column;}
   .admin-sidebar{width:100%;}
 }
+
+/* ---------- Profile avatar (account + admin profile pages) ---------- */
+.avatar-wrap{display:flex;align-items:center;gap:20px;margin-bottom:20px;}
+.avatar-circle{width:84px;height:84px;border-radius:50%;object-fit:cover;background:#F3E8FF;border:1.5px solid #e5e7eb;}
+.avatar-placeholder{width:84px;height:84px;border-radius:50%;background:var(--brand-purple);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;}
+.avatar-upload-label{display:inline-block;background:#fff;border:1.5px solid var(--brand-purple);color:var(--brand-purple);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.avatar-upload-label input{display:none;}
+.field-locked{background:#F3F4F6;color:var(--muted);cursor:not-allowed;}

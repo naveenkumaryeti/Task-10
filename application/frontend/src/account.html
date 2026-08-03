@@ -10,8 +10,11 @@
 <main class="container" style="padding-bottom:60px;">
   <h2 class="section-title">My Account</h2>
   <div class="auth-card" style="max-width:100%;margin-bottom:24px;" id="userCard"></div>
-  <h3 class="section-title" style="font-size:16px;">Order History</h3>
-  <div id="orders"></div>
+
+  <h3 class="section-title" style="font-size:16px;">
+    <button class="btn btn-outline" id="viewOrdersBtn">View Orders</button>
+  </h3>
+  <div id="orders" style="display:none;"></div>
 </main>
 <div id="app-footer"></div>
 <script src="js/demo-data.js"></script>
@@ -22,35 +25,103 @@
 (async function () {
   renderHeader();
   renderFooter();
-  const user = JSON.parse(localStorage.getItem("qk_user") || "null");
+  let user = JSON.parse(localStorage.getItem("qk_user") || "null");
   if (!user) { window.location.href = "login.html"; return; }
 
-  document.getElementById("userCard").innerHTML = `
-    <h3>${user.name}</h3>
-    <p class="sub">${user.email}</p>
-    <button class="btn btn-outline" id="logoutBtn" style="margin-top:12px;">Logout</button>`;
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    localStorage.removeItem("qk_token");
-    localStorage.removeItem("qk_user");
-    window.location.href = "index.html";
-  });
-
+  // Refresh from server so profile pic / phone are current
   try {
-    const orders = await Api.getMyOrders();
-    const el = document.getElementById("orders");
-    el.innerHTML = orders.length
-      ? orders.map(o => `
-        <div class="cart-item">
-          <div style="flex:1;">
-            <div class="cname">Order #${o.id}</div>
-            <div class="cweight">${new Date(o.created_at).toLocaleString()} · ${o.payment_method}</div>
-          </div>
-          <div style="font-weight:700;">${currency(o.total_amount)}</div>
-        </div>`).join("")
-      : `<div class="empty-state">No orders yet.</div>`;
-  } catch {
-    document.getElementById("orders").innerHTML = `<div class="empty-state">Order history unavailable offline.</div>`;
+    user = await Api.getMyProfile();
+    localStorage.setItem("qk_user", JSON.stringify(user));
+  } catch { /* keep cached copy if offline */ }
+
+  function renderCard() {
+    const avatarHTML = user.profile_pic
+      ? `<img src="${user.profile_pic}" class="avatar-circle" alt="">`
+      : `<div class="avatar-placeholder">${user.name.charAt(0).toUpperCase()}</div>`;
+
+    document.getElementById("userCard").innerHTML = `
+      <div class="avatar-wrap">
+        ${avatarHTML}
+        <label class="avatar-upload-label">Change Photo
+          <input type="file" id="picInput" accept="image/*">
+        </label>
+      </div>
+      <div id="msg"></div>
+      <div class="form-group"><label>Name</label><input id="nameInput" value="${user.name}"></div>
+      <div class="form-group"><label>Email (cannot be changed)</label><input value="${user.email}" class="field-locked" disabled></div>
+      <div class="form-group"><label>Phone</label><input id="phoneInput" value="${user.phone || ""}"></div>
+      <div class="form-group"><label>New Password (leave blank to keep current)</label><input id="passwordInput" type="password" placeholder="••••••••"></div>
+      <button class="auth-submit" id="saveBtn" style="max-width:220px;">Save Changes</button>
+      <button class="btn btn-outline" id="logoutBtn" style="margin-top:12px;">Logout</button>`;
+
+    document.getElementById("picInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const res = await Api.updateMyProfile({ profile_pic: reader.result });
+          user = res.user;
+          localStorage.setItem("qk_user", JSON.stringify(user));
+          renderCard();
+        } catch (err) {
+          document.getElementById("msg").innerHTML = `<div class="error-msg">${err.message}</div>`;
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("msg");
+      const payload = {
+        name: document.getElementById("nameInput").value.trim(),
+        phone: document.getElementById("phoneInput").value.trim(),
+      };
+      const pwd = document.getElementById("passwordInput").value;
+      if (pwd) payload.password = pwd;
+      try {
+        const res = await Api.updateMyProfile(payload);
+        user = res.user;
+        localStorage.setItem("qk_user", JSON.stringify(user));
+        renderCard();
+        document.getElementById("msg").innerHTML = `<div class="success-msg">Profile updated.</div>`;
+      } catch (err) {
+        msg.innerHTML = `<div class="error-msg">${err.message}</div>`;
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("qk_token");
+      localStorage.removeItem("qk_user");
+      window.location.href = "index.html";
+    });
   }
+  renderCard();
+
+  let ordersLoaded = false;
+  document.getElementById("viewOrdersBtn").addEventListener("click", async () => {
+    const el = document.getElementById("orders");
+    const visible = el.style.display !== "none";
+    if (visible) { el.style.display = "none"; return; }
+    el.style.display = "block";
+    if (ordersLoaded) return;
+    ordersLoaded = true;
+    try {
+      const orders = await Api.getMyOrders();
+      el.innerHTML = orders.length
+        ? orders.map(o => `
+          <div class="cart-item">
+            <div style="flex:1;">
+              <div class="cname">Order #${o.id}</div>
+              <div class="cweight">${new Date(o.created_at).toLocaleString()} · ${o.payment_method}</div>
+            </div>
+            <div style="font-weight:700;">${currency(o.total_amount)}</div>
+          </div>`).join("")
+        : `<div class="empty-state">No orders yet.</div>`;
+    } catch {
+      el.innerHTML = `<div class="empty-state">Order history unavailable offline.</div>`;
+    }
+  });
 })();
 </script>
 </body>

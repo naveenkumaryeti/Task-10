@@ -19,7 +19,10 @@ router.post("/login", async (req, res) => {
     if (!match) return res.status(401).json({ error: "Invalid admin credentials" });
 
     const token = jwt.sign({ id: admin.id, email: admin.email, role: "admin" }, JWT_SECRET, { expiresIn: "12h" });
-    res.json({ token, admin: { id: admin.id, name: admin.name, email: admin.email } });
+    res.json({
+      token,
+      admin: { id: admin.id, name: admin.name, email: admin.email, profile_pic: admin.profile_pic },
+    });
   } catch (err) {
     res.status(500).json({ error: "Admin login failed", details: err.message });
   }
@@ -27,6 +30,49 @@ router.post("/login", async (req, res) => {
 
 // All routes below require a valid admin JWT
 router.use(verifyAdmin);
+
+// ---------- Current admin profile (view) ----------
+router.get("/me", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, email, profile_pic FROM admin_users WHERE id = ?",
+      [req.admin.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: "Admin not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load profile", details: err.message });
+  }
+});
+
+// ---------- Current admin profile (edit name / password / profile pic) ----------
+// Email is intentionally excluded — it is never editable here.
+router.put("/me", async (req, res) => {
+  const { name, password, profile_pic } = req.body;
+  const updates = [];
+  const values = [];
+
+  if (name !== undefined) { updates.push("name = ?"); values.push(name); }
+  if (profile_pic !== undefined) { updates.push("profile_pic = ?"); values.push(profile_pic); }
+  if (password) {
+    if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+    updates.push("password_hash = ?");
+    values.push(await bcrypt.hash(password, 10));
+  }
+  if (!updates.length) return res.status(400).json({ error: "No fields to update" });
+
+  values.push(req.admin.id);
+  try {
+    await pool.query(`UPDATE admin_users SET ${updates.join(", ")} WHERE id = ?`, values);
+    const [rows] = await pool.query(
+      "SELECT id, name, email, profile_pic FROM admin_users WHERE id = ?",
+      [req.admin.id]
+    );
+    res.json({ message: "Profile updated", admin: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update profile", details: err.message });
+  }
+});
 
 // ---------- Dashboard stats ----------
 router.get("/stats", async (req, res) => {

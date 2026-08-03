@@ -21,6 +21,10 @@ const Api = {
   login: (payload) => apiRequest("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
   adminLogin: (payload) => apiRequest("/admin/login", { method: "POST", body: JSON.stringify(payload) }),
 
+  // Customer profile (name / phone / password / profile pic — email is never editable)
+  getMyProfile: () => apiRequest("/auth/me"),
+  updateMyProfile: (payload) => apiRequest("/auth/me", { method: "PUT", body: JSON.stringify(payload) }),
+
   // Catalog
   getCategories: () => apiRequest("/categories"),
   getProducts: (categoryId) => apiRequest(categoryId ? `/products?category=${categoryId}` : "/products"),
@@ -44,4 +48,8 @@ const Api = {
   adminGetCategories: () => apiRequest("/admin/categories"),
   adminCreateCategory: (payload) => apiRequest("/admin/categories", { method: "POST", body: JSON.stringify(payload) }),
   adminGetCustomers: () => apiRequest("/admin/customers"),
+
+  // Admin profile (name / password / profile pic — email is never editable)
+  adminGetMyProfile: () => apiRequest("/admin/me"),
+  adminUpdateMyProfile: (payload) => apiRequest("/admin/me", { method: "PUT", body: JSON.stringify(payload) }),
 };
