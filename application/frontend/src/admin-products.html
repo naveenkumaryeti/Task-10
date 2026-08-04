@@ -149,7 +149,25 @@
       const file = imgFileInput.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => { imgPreview.src = reader.result; imgPreview.dataset.base64 = reader.result; };
+      reader.onload = () => {
+        // Resize to max 500px and compress to JPEG before storing — a
+        // raw phone photo can be 3-8MB, which exceeds server upload
+        // limits and fails silently. This keeps uploads reliably small.
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 500;
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const resized = canvas.toDataURL("image/jpeg", 0.8);
+          imgPreview.src = resized;
+          imgPreview.dataset.base64 = resized;
+        };
+        img.src = reader.result;
+      };
       reader.readAsDataURL(file);
     });
 
@@ -169,6 +187,10 @@
       };
       if (!payload.name) { alert("Product name is required."); return; }
 
+      const saveBtn = overlay.querySelector("#saveModal");
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
       try {
         if (isEdit) {
           await Api.adminUpdateProduct(product.id, payload);
@@ -177,12 +199,16 @@
           const res = await Api.adminCreateProduct(payload);
           products.unshift({ id: res.id || Date.now(), ...payload });
         }
-      } catch {
-        if (isEdit) Object.assign(product, payload);
-        else products.unshift({ id: Date.now(), ...payload });
+        overlay.remove();
+        renderTable();
+      } catch (err) {
+        // Surface the REAL error instead of silently pretending it
+        // worked — this is what was hiding the actual save failures.
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEdit ? "Save Changes" : "Add Product";
+        alert("❌ Save failed: " + (err.message || "Unknown error") +
+          "\n\nIf this mentions payload/body size, try a smaller image or use the Image URL tab instead of uploading.");
       }
-      overlay.remove();
-      renderTable();
     });
   }
 
