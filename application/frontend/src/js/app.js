@@ -37,12 +37,14 @@ function renderHeader(activeCategoryId) {
           <div class="loc-title">📍 Delivery in 10 mins</div>
           <div class="loc-sub" id="locSub">Detecting location...</div>
         </div>
-        <div class="search-box">
+        <div class="search-box" style="position:relative;">
           <span>🔍</span>
-          <input id="globalSearch" type="text" placeholder="Search for milk, fruits, snacks...">
+          <input id="globalSearch" type="text" placeholder="Search for milk, fruits, snacks..." autocomplete="off">
+          <div class="search-suggestions" id="searchSuggestions"></div>
         </div>
         <div class="header-actions">
           ${authBlock}
+          <a href="wishlist.html" class="wishlist-btn" title="Wishlist">♡ <span class="cart-count" id="wishlistCount">0</span></a>
           <a href="cart.html" class="cart-btn">🛒 Cart <span class="cart-count" id="cartCount">0</span></a>
         </div>
       </div>
@@ -53,10 +55,33 @@ function renderHeader(activeCategoryId) {
   `;
 
   const search = document.getElementById("globalSearch");
+  const suggestBox = document.getElementById("searchSuggestions");
+  let searchTimer;
+
   search.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && search.value.trim()) {
       window.location.href = `search.html?q=${encodeURIComponent(search.value.trim())}`;
     }
+  });
+
+  search.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    const q = search.value.trim();
+    if (q.length < 2) { suggestBox.classList.remove("open"); return; }
+    searchTimer = setTimeout(async () => {
+      const results = (await searchCatalog(q)).slice(0, 6);
+      if (!results.length) { suggestBox.classList.remove("open"); return; }
+      suggestBox.innerHTML = results.map(p => `
+        <a href="product.html?id=${p.id}" class="suggestion-item">
+          <img src="${p.image_url}" alt="">
+          <div><div class="s-name">${p.name}</div><div class="s-price">${currency(p.price)}</div></div>
+        </a>`).join("");
+      suggestBox.classList.add("open");
+    }, 300);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-box")) suggestBox.classList.remove("open");
   });
 
   initLiveLocation();
@@ -82,6 +107,7 @@ function renderHeader(activeCategoryId) {
   }
 
   Cart.updateBadge();
+  if (typeof Wishlist !== "undefined") Wishlist.updateBadge();
 }
 
 function renderFooter() {
@@ -148,9 +174,11 @@ async function searchCatalog(q) {
 function productCardHTML(p) {
   const disc = discountPercent(p.price, p.mrp);
   const qty = Cart.get()[p.id] || 0;
+  const wished = typeof Wishlist !== "undefined" && Wishlist.has(p.id);
   return `
     <div class="product-card" data-id="${p.id}">
       ${disc > 0 ? `<div class="discount-badge">${disc}% OFF</div>` : ""}
+      <button class="wishlist-heart ${wished ? "active" : ""}" data-wish="${p.id}" title="Add to wishlist">${wished ? "♥" : "♡"}</button>
       <a href="product.html?id=${p.id}" class="p-img"><img src="${p.image_url}" alt="${p.name}" loading="lazy"></a>
       <div class="p-weight">${p.weight}</div>
       <a href="product.html?id=${p.id}"><div class="p-name">${p.name}</div></a>
@@ -167,12 +195,20 @@ function productCardHTML(p) {
 
 function wireProductGrid(container) {
   container.addEventListener("click", (e) => {
+    if (e.target.dataset.wish) {
+      const isWished = Wishlist.toggle(e.target.dataset.wish);
+      e.target.textContent = isWished ? "♥" : "♡";
+      e.target.classList.toggle("active", isWished);
+      Toast.info(isWished ? "Added to wishlist" : "Removed from wishlist", 1500);
+      return;
+    }
     const card = e.target.closest(".product-card");
     if (!card) return;
     const id = card.dataset.id;
     if (e.target.classList.contains("add-to-cart")) {
       Cart.add(id, 1);
       refreshCartControl(card, id);
+      Toast.success("Added to cart", 1200);
     } else if (e.target.classList.contains("inc")) {
       Cart.add(id, 1);
       refreshCartControl(card, id);
@@ -239,4 +275,55 @@ function initLiveLocation() {
     },
     { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
   );
+}
+
+// ---------------------------------------------------------------------
+// Skeleton loading placeholders — shown while product/category data is
+// being fetched, so the page never looks blank while loading.
+// ---------------------------------------------------------------------
+function skeletonProductGrid(count = 6) {
+  return `<div class="product-grid">${Array(count).fill(0).map(() => `
+    <div class="skeleton-card">
+      <div class="skeleton-box" style="height:120px;border-radius:10px;margin-bottom:10px;"></div>
+      <div class="skeleton-box" style="height:11px;width:60%;margin-bottom:8px;"></div>
+      <div class="skeleton-box" style="height:13px;width:85%;margin-bottom:12px;"></div>
+      <div class="skeleton-box" style="height:26px;width:100%;"></div>
+    </div>`).join("")}</div>`;
+}
+
+// ---------------------------------------------------------------------
+// Recently viewed products — tracked in localStorage (max 10, most
+// recent first), rendered as a home-page section.
+// ---------------------------------------------------------------------
+const RECENTLY_VIEWED_KEY = "qk_recently_viewed";
+
+function trackRecentlyViewed(productId) {
+  let list = JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || "[]");
+  list = [String(productId), ...list.filter((id) => id !== String(productId))].slice(0, 10);
+  localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(list));
+}
+
+async function renderRecentlyViewed(targetElId) {
+  const ids = JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || "[]");
+  const target = document.getElementById(targetElId);
+  if (!target || !ids.length) return;
+
+  const allProducts = await loadProducts();
+  const items = ids.map((id) => allProducts.find((p) => p.id == id)).filter(Boolean);
+  if (!items.length) return;
+
+  target.innerHTML = `
+    <h2 class="section-title">🕐 Recently Viewed</h2>
+    <div class="product-grid">${items.map(productCardHTML).join("")}</div>`;
+  wireProductGrid(target);
+}
+
+// ---------------------------------------------------------------------
+// Register the PWA service worker (installable app + basic offline
+// shell). Silently no-ops if the browser doesn't support it.
+// ---------------------------------------------------------------------
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
 }

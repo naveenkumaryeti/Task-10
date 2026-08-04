@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>My Wishlist — QuikKart</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-header"></div>
+<main class="container" style="padding-bottom:60px;">
+  <h2 class="section-title">♥ My Wishlist</h2>
+  <div id="wishlistGrid"></div>
+  <div class="empty-state" id="wishlistEmpty" style="display:none;">
+    🤍<br>Your wishlist is empty.<br>
+    <a href="index.html" class="btn btn-primary" style="display:inline-block;margin-top:14px;">Browse Products</a>
+  </div>
+</main>
+<div id="app-footer"></div>
+<script src="js/demo-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/wishlist.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async function () {
+  renderHeader();
+  renderFooter();
+
+  const ids = Wishlist.get();
+  const grid = document.getElementById("wishlistGrid");
+  if (!ids.length) {
+    document.getElementById("wishlistEmpty").style.display = "block";
+    return;
+  }
+
+  const allProducts = await loadProducts();
+  const items = ids.map((id) => allProducts.find((p) => p.id == id)).filter(Boolean);
+
+  if (!items.length) {
+    document.getElementById("wishlistEmpty").style.display = "block";
+    return;
+  }
+
+  grid.innerHTML = `<div class="product-grid">${items.map(productCardHTML).join("")}</div>`;
+  wireProductGrid(grid);
+})();
+</script>
+</body>
+</html>

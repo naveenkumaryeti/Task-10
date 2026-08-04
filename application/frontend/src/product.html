@@ -13,7 +13,15 @@
   .pd-price-block{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
   .pd-price-block .p-price{font-size:26px;font-weight:800;}
   .pd-desc{color:#444;line-height:1.7;font-size:14px;margin-top:24px;}
-  @media(max-width:768px){.pd-wrap{grid-template-columns:1fr;}}
+  @media(max-width:768px){
+    .pd-wrap{grid-template-columns:1fr;padding-bottom:90px;}
+    .sticky-add-bar{
+      position:fixed;bottom:0;left:0;right:0;background:#fff;
+      box-shadow:0 -4px 16px rgba(0,0,0,.1);padding:12px 16px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:60;
+    }
+  }
+  @media(min-width:769px){.sticky-add-bar{display:none;}}
 </style>
 </head>
 <body>
@@ -21,10 +29,18 @@
 <main class="container">
   <div class="pd-wrap" id="pdWrap"></div>
 </main>
+<div class="sticky-add-bar" id="stickyAddBar" style="display:none;">
+  <div>
+    <div style="font-weight:800;" id="stickyPrice"></div>
+  </div>
+  <div id="stickyCartControl" style="flex:1;max-width:180px;"></div>
+</div>
 <div id="app-footer"></div>
 <script src="js/demo-data.js"></script>
 <script src="js/api.js"></script>
 <script src="js/cart.js"></script>
+<script src="js/wishlist.js"></script>
+<script src="js/toast.js"></script>
 <script src="js/app.js"></script>
 <script>
 (async function () {
@@ -39,8 +55,14 @@
   const disc = discountPercent(p.price, p.mrp);
   const qty = Cart.get()[p.id] || 0;
 
+  trackRecentlyViewed(p.id);
+  const wished = Wishlist.has(p.id);
+
   document.getElementById("pdWrap").innerHTML = `
-    <div class="pd-img"><img src="${p.image_url}" alt="${p.name}"></div>
+    <div class="pd-img" style="position:relative;">
+      <button class="wishlist-heart ${wished ? "active" : ""}" id="pdWishBtn" style="position:absolute;top:14px;right:14px;">${wished ? "♥" : "♡"}</button>
+      <img src="${p.image_url}" alt="${p.name}">
+    </div>
     <div class="pd-info">
       <h1>${p.name}</h1>
       <div class="p-weight">${p.weight}</div>
@@ -56,18 +78,36 @@
       <p class="pd-desc">Fresh, quality-checked ${p.name.toLowerCase()} sourced daily from trusted local suppliers and delivered to your door in minutes. Stored and packed under hygienic conditions.</p>
     </div>`;
 
-  document.getElementById("pdCartControl").addEventListener("click", (e) => {
-    if (e.target.classList.contains("add-to-cart")) { Cart.add(p.id, 1); rerender(); }
+  document.getElementById("pdWishBtn").addEventListener("click", (e) => {
+    const isWished = Wishlist.toggle(p.id);
+    e.target.textContent = isWished ? "♥" : "♡";
+    e.target.classList.toggle("active", isWished);
+    Toast.info(isWished ? "Added to wishlist" : "Removed from wishlist", 1500);
+  });
+
+  document.getElementById("pdCartControl").addEventListener("click", handleCartClick);
+
+  const stickyBar = document.getElementById("stickyAddBar");
+  const stickyControl = document.getElementById("stickyCartControl");
+  document.getElementById("stickyPrice").textContent = currency(p.price);
+  stickyBar.style.display = "flex";
+  stickyControl.addEventListener("click", handleCartClick);
+
+  function handleCartClick(e) {
+    if (e.target.classList.contains("add-to-cart")) { Cart.add(p.id, 1); Toast.success("Added to cart", 1200); rerender(); }
     else if (e.target.classList.contains("inc")) { Cart.add(p.id, 1); rerender(); }
     else if (e.target.classList.contains("dec")) { Cart.setQty(p.id, (Cart.get()[p.id] || 0) - 1); rerender(); }
-  });
+  }
 
   function rerender() {
     const q = Cart.get()[p.id] || 0;
-    document.getElementById("pdCartControl").innerHTML = q > 0
+    const html = q > 0
       ? `<div class="qty-control" style="width:140px;justify-content:space-between;"><button class="dec">−</button><span>${q}</span><button class="inc">+</button></div>`
       : `<button class="btn btn-primary add-to-cart">Add to Cart</button>`;
+    document.getElementById("pdCartControl").innerHTML = html;
+    stickyControl.innerHTML = html;
   }
+  rerender(); // sync sticky bar with initial state
 })();
 </script>
 </body>
